@@ -633,8 +633,7 @@ public class VideaEdit {
                 if (decoderOutputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                     decoderOutputVideoFormat = videoDecoder.getOutputFormat();
                     if (VERBOSE) {
-                        Log.d(TAG, "video decoder: output format changed: "
-                                + decoderOutputVideoFormat);
+                        Log.d(TAG, "video decoder: output format changed: " + decoderOutputVideoFormat);
                     }
                     break;
                 }
