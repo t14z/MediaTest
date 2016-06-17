@@ -31,7 +31,5 @@ public class VideaEditActivity extends AppCompatActivity implements View.OnClick
                 }
             }
         }.start();
-
-
     }
 }

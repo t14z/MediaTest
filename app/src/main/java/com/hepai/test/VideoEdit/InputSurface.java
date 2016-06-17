@@ -11,14 +11,14 @@ import android.view.Surface;
 
 /**
  * Holds state associated with a Surface used for MediaCodec encoder input.
- * <p>
+ * <p/>
  * The constructor takes a Surface obtained from MediaCodec.createInputSurface(), and uses that
  * to create an EGL window surface.  Calls to eglSwapBuffers() cause a frame of data to be sent
  * to the video encoder.
  */
 public class InputSurface {
     private static final String TAG = "InputSurface";
-    private static final boolean VERBOSE = false;
+    private static final boolean VERBOSE = true;
     private static final int EGL_RECORDABLE_ANDROID = 0x3142;
     private static final int EGL_OPENGL_ES2_BIT = 4;
     private EGLDisplay mEGLDisplay;
@@ -137,6 +137,7 @@ public class InputSurface {
      * Sends the presentation time stamp to EGL.  Time is expressed in nanoseconds.
      */
     public void setPresentationTime(long nsecs) {
+        if (VERBOSE) Log.i(TAG, "nsecs = " + nsecs);
         EGLExt.eglPresentationTimeANDROID(mEGLDisplay, mEGLSurface, nsecs);
     }
 
