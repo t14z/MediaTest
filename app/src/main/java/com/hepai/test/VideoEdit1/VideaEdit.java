@@ -104,7 +104,7 @@ public class VideaEdit {
     /**
      * The destination file for the encoded output.
      */
-    private String mOutputFile = Environment.getExternalStorageDirectory() + "/z_zzzz.mp4";
+    private String mOutputFile = Environment.getExternalStorageDirectory() + "/zzz10.mp4";
 
     private Context context;
 
@@ -159,7 +159,7 @@ public class VideaEdit {
 
                 // Create a MediaCodec for the decoder, based on the extractor's format.
                 outputSurface1 = new OutputSurface();
-                outputSurface1.changeFragmentShader(FRAGMENT_SHADER);
+                //outputSurface1.changeFragmentShader(FRAGMENT_SHADER);
                 videoDecoder1 = createVideoDecoder(inputFormat1, outputSurface1.getSurface());
 
                 videoExtractor2 = createExtractor(R.raw.bb);
@@ -168,7 +168,7 @@ public class VideaEdit {
 
                 // Create a MediaCodec for the decoder, based on the extractor's format.
                 outputSurface2 = new OutputSurface();
-                outputSurface2.changeFragmentShader(FRAGMENT_SHADER);
+                //outputSurface2.changeFragmentShader(FRAGMENT_SHADER);
                 videoDecoder2 = createVideoDecoder(inputFormat2, outputSurface2.getSurface());
 
             }
