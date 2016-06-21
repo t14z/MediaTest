@@ -30,10 +30,7 @@ import android.util.Log;
 import android.view.Surface;
 
 import com.hepai.test.R;
-import com.hepai.test.VideoEdit.InputSurface;
-import com.hepai.test.VideoEdit.OutputSurface;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicReference;
