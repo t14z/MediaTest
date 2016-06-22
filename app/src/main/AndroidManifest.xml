@@ -30,10 +30,7 @@
         <activity android:name=".gaussBlur.GaussBlurActivity" />
         <activity android:name=".FirstPicDV.PhotoAlbumActivity"></activity>
         <activity android:name=".MediaCodec.MediaCodecTestActivity"></activity>
-        <activity android:name=".VideoEdit.VideaEditActivity">
-
-
-        </activity>
+        <activity android:name=".VideoEdit.VideaEditActivity"></activity>
         <activity android:name=".VideoEdit1.VideaEditActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -42,15 +39,16 @@
             </intent-filter>
         </activity>
         <activity android:name=".AudioRecordingSample.RecordActivity"></activity>
-        <!--
-             ATTENTION: This was auto-generated to add Google Play services to your project for
-             App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information.
-        -->
+        <activity android:name=".MediaAudioRecord.AudioRecordActivity"></activity>
+        <activity android:name="com.hepai.test.OpenGLES2.Sample3_1Activity">
+
+        </activity>
+
+
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-        <activity android:name=".MediaAudioRecord.AudioRecordActivity"></activity>
     </application>
 
 </manifest>
