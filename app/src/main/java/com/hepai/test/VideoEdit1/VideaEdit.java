@@ -204,15 +204,17 @@ public class VideaEdit {
             // The audio decoder output buffer to process, -1 if none.
             // int pendingAudioDecoderOutputBufferIndex = -1;
 
-            boolean fuck = true;
+            int fuck = 0;
             long time = 0L;
+            long time1 = 0L;
+            int i = 0;
 
             while (mCopyVideo && !videoEncoderDone) {
 
                 // Extract video from file and feed to decoder.
                 // Do not extract video if we have determined the output format but we are not yet
                 // ready to mux the frames.
-                if (fuck) {
+                if (fuck == 0) {
 
                     while (mCopyVideo && !videoExtractorDone1) {
                         int decoderInputBufferIndex = videoDecoder1.dequeueInputBuffer(TIMEOUT_USEC);
@@ -276,13 +278,13 @@ public class VideaEdit {
                         if ((videoDecoderOutputBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                             videoDecoderDone1 = true;
                             //videoEncoder.signalEndOfInputStream();
-                            fuck = false;
+                            fuck = 1;
                             if (VERBOSE) Log.d(TAG, "video decoder: EOS");
                         }
                         // We extracted a pending frame, let's try something else next.
                         break;
                     }
-                } else {
+                } else if (fuck == 1) {
                     while (mCopyVideo && !videoExtractorDone2) {
                         int decoderInputBufferIndex = videoDecoder2.dequeueInputBuffer(TIMEOUT_USEC);
                         if (VERBOSE)
@@ -343,19 +345,32 @@ public class VideaEdit {
                         if (render) {
                             outputSurface2.awaitNewImage();
                             outputSurface2.drawImage();
-                            inputSurface.setPresentationTime((videoDecoderOutputBufferInfo.presentationTimeUs + time) * 1000);
+                            time1 = (videoDecoderOutputBufferInfo.presentationTimeUs + time) * 1000;
+                            inputSurface.setPresentationTime(time1);
                             inputSurface.swapBuffers();
                             if (VERBOSE) Log.d(TAG, "video encoder: notified of new frame");
                         }
                         if ((videoDecoderOutputBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+
+                            fuck = 2;
                             videoDecoderDone2 = true;
-                            videoEncoder.signalEndOfInputStream();
+                            //videoEncoder.signalEndOfInputStream();
                             if (VERBOSE) Log.d(TAG, "video decoder: EOS");
                         }
                         // We extracted a pending frame, let's try something else next.
                         break;
                     }
 
+                } else if (fuck == 2) {
+                    //outputSurface2.awaitNewImage();
+                    outputSurface2.drawImage();
+                    inputSurface.setPresentationTime(time1 + computePresentationTimeNsec(i));
+                    inputSurface.swapBuffers();
+                    i++;
+                    if (i > 60) {
+                        fuck = 3;
+                        videoEncoder.signalEndOfInputStream();
+                    }
                 }
 
                 // Poll frames from the video encoder and send them to the muxer.
@@ -395,8 +410,6 @@ public class VideaEdit {
                     break;
                 }
             }
-
-
         } finally {
             // Try to release everything we acquired, even if one of the releases fails, in which
             // case we save the first exception we got and re-throw at the end (unless something
@@ -480,6 +493,14 @@ public class VideaEdit {
         if (exception != null) {
             throw exception;
         }
+    }
+
+    /**
+     * Generates the presentation time for frame N, in nanoseconds.
+     */
+    private long computePresentationTimeNsec(int frameIndex) {
+        final long ONE_BILLION = 1000000000;
+        return frameIndex * ONE_BILLION / 30;
     }
 
     private MediaExtractor createExtractor(int mSourceResId) throws IOException {

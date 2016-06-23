@@ -15,7 +15,7 @@ public class LessonOneActivity extends Activity implements View.OnClickListener 
      * Hold a reference to our GLSurfaceView
      */
     private GLSurfaceView mGLSurfaceView;
-    LessonOneRenderer1 mRender;
+    LessonOneRenderer3 mRender;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -32,7 +32,7 @@ public class LessonOneActivity extends Activity implements View.OnClickListener 
             // Request an OpenGL ES 2.0 compatible context.
             mGLSurfaceView.setEGLContextClientVersion(2);
 
-            mRender = new LessonOneRenderer1(this);
+            mRender = new LessonOneRenderer3(this);
             // Set the renderer to our demo renderer, defined below.
             mGLSurfaceView.setRenderer(mRender);
         } else {

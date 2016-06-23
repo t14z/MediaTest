@@ -23,7 +23,12 @@
         <activity android:name=".AudioRecordingSample.AudioRecordPlayActivity" />
         <activity android:name=".CameraActivity" />
         <activity android:name=".AudioActivity" />
-        <activity android:name=".openGL.LessonOneActivity" />
+        <activity android:name=".openGL.LessonOneActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter></activity>
         <activity android:name=".MainActivity"></activity>
         <activity android:name=".MuxerAudioVideoActivity" />
         <activity android:name=".Text2Pic.TestActivity" />
@@ -32,11 +37,6 @@
         <activity android:name=".MediaCodec.MediaCodecTestActivity"></activity>
         <activity android:name=".VideoEdit.VideaEditActivity"></activity>
         <activity android:name=".VideoEdit1.VideaEditActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity android:name=".AudioRecordingSample.RecordActivity"></activity>
         <activity android:name=".MediaAudioRecord.AudioRecordActivity"></activity>
