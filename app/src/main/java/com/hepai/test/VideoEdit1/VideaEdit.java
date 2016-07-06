@@ -33,6 +33,8 @@ import com.hepai.test.R;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -105,10 +107,299 @@ public class VideaEdit {
 
     private Context context;
 
+    private String[] videoPaths;
 
-    public VideaEdit(Context context) {
+
+    public VideaEdit(Context context, String[] videoPaths) {
         this.context = context;
+        this.videoPaths = videoPaths;
     }
+
+    private class VideoExtractorAndDecoder {
+
+        private MediaExtractor videoExtractor = null;
+        private OutputSurface outputSurface = null;
+        private MediaCodec videoDecoder = null;
+
+        private ByteBuffer[] videoDecoderInputBuffers = null;
+        private ByteBuffer[] videoDecoderOutputBuffers = null;
+        private MediaCodec.BufferInfo videoDecoderOutputBufferInfo = null;
+
+        private long currentTime = 0;
+        private String path;
+        private InputSurface inputSurface;
+
+        private boolean videoExtractorDone = false;
+        private boolean videoDecoderDone = false;
+
+        private VideoExtractorAndDecoder(String path, InputSurface inputSurface) throws Exception {
+            this.path = path;
+            this.inputSurface = inputSurface;
+            init();
+        }
+
+        public OutputSurface getOutputSurface() {
+            return outputSurface;
+        }
+
+        private void init() throws Exception {
+            videoExtractor = createExtractor(path);
+            int videoInputTrack = getAndSelectVideoTrackIndex(videoExtractor);
+            MediaFormat inputFormat = videoExtractor.getTrackFormat(videoInputTrack);
+
+            outputSurface = new OutputSurface();
+            videoDecoder = createVideoDecoder(inputFormat, outputSurface.getSurface());
+
+            videoDecoderInputBuffers = videoDecoder.getInputBuffers();
+            videoDecoderOutputBuffers = videoDecoder.getOutputBuffers();
+            videoDecoderOutputBufferInfo = new MediaCodec.BufferInfo();
+        }
+
+        private boolean action() {
+            while (!videoExtractorDone) {
+                int decoderInputBufferIndex = videoDecoder.dequeueInputBuffer(TIMEOUT_USEC);
+                if (decoderInputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                    break;
+                }
+                ByteBuffer decoderInputBuffer = videoDecoderInputBuffers[decoderInputBufferIndex];
+                int size = videoExtractor.readSampleData(decoderInputBuffer, 0);
+                long presentationTime = videoExtractor.getSampleTime();
+                if (size >= 0) {
+                    videoDecoder.queueInputBuffer(
+                            decoderInputBufferIndex,
+                            0,
+                            size,
+                            presentationTime,
+                            videoExtractor.getSampleFlags());
+                }
+                videoExtractorDone = !videoExtractor.advance();
+                if (videoExtractorDone) {
+                    if (VERBOSE) Log.d(TAG, "video extractor: EOS");
+                    videoDecoder.queueInputBuffer(
+                            decoderInputBufferIndex,
+                            0,
+                            0,
+                            0,
+                            MediaCodec.BUFFER_FLAG_END_OF_STREAM);
+                }
+                break;
+            }
+
+            // Poll output frames from the video decoder and feed the encoder.
+            while (!videoDecoderDone) {
+                int decoderOutputBufferIndex = videoDecoder.dequeueOutputBuffer(videoDecoderOutputBufferInfo, TIMEOUT_USEC);
+                if (decoderOutputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                    break;
+                }
+                if (decoderOutputBufferIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                    videoDecoderOutputBuffers = videoDecoder.getOutputBuffers();
+                    break;
+                }
+                if (decoderOutputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    //decoderOutputVideoFormat = videoDecoder1.getOutputFormat();
+                    break;
+                }
+                ByteBuffer decoderOutputBuffer = videoDecoderOutputBuffers[decoderOutputBufferIndex];
+                if ((videoDecoderOutputBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                    videoDecoder.releaseOutputBuffer(decoderOutputBufferIndex, false);
+                    break;
+                }
+
+                boolean render = videoDecoderOutputBufferInfo.size != 0;
+                videoDecoder.releaseOutputBuffer(decoderOutputBufferIndex, render);
+                if (render) {
+                    outputSurface.awaitNewImage();
+                    outputSurface.drawImage();
+                    currentTime = wholeTime + videoDecoderOutputBufferInfo.presentationTimeUs * 1000;
+                    inputSurface.setPresentationTime(currentTime);
+                    inputSurface.swapBuffers();
+                    if (VERBOSE) Log.d(TAG, "video encoder: notified of new frame");
+                }
+                if ((videoDecoderOutputBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                    videoDecoderDone = true;
+                    wholeTime = wholeTime + currentTime;
+                    if (VERBOSE) Log.d(TAG, "video decoder: EOS");
+                }
+                break;
+            }
+            return videoDecoderDone;
+        }
+
+        private void release() {
+            try {
+                if (videoExtractor != null) {
+                    videoExtractor.release();
+                }
+            } catch (Exception e) {
+                throw e;
+            }
+            try {
+                if (videoDecoder != null) {
+                    videoDecoder.stop();
+                    videoDecoder.release();
+                }
+            } catch (Exception e) {
+                throw e;
+            }
+            try {
+                if (outputSurface != null) {
+                    outputSurface.release();
+                }
+            } catch (Exception e) {
+                throw e;
+            }
+        }
+    }
+
+    long wholeTime;
+
+    /**
+     * Tests encoding and subsequently decoding video from frames generated into a buffer.
+     * <p/>
+     * We encode several frames of a video test pattern using MediaCodec, then decode the output
+     * with MediaCodec and do some simple checks.
+     */
+    public void start1() throws Exception {
+
+
+        MediaCodecInfo videoCodecInfo = selectCodec(OUTPUT_VIDEO_MIME_TYPE);
+        if (videoCodecInfo == null) {
+            throw new Exception("设备不支持");
+        }
+
+        MediaCodec videoEncoder = null;
+        MediaMuxer muxer = null;
+        InputSurface inputSurface = null;
+
+        try {
+
+            MediaFormat outputVideoFormat = MediaFormat.createVideoFormat(OUTPUT_VIDEO_MIME_TYPE, mWidth, mHeight);
+            outputVideoFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, OUTPUT_VIDEO_COLOR_FORMAT);
+            outputVideoFormat.setInteger(MediaFormat.KEY_BIT_RATE, OUTPUT_VIDEO_BIT_RATE);
+            outputVideoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, OUTPUT_VIDEO_FRAME_RATE);
+            outputVideoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, OUTPUT_VIDEO_IFRAME_INTERVAL);
+
+            AtomicReference<Surface> inputSurfaceReference = new AtomicReference<>();
+            videoEncoder = createVideoEncoder(videoCodecInfo, outputVideoFormat, inputSurfaceReference);
+            inputSurface = new InputSurface(inputSurfaceReference.get());
+            inputSurface.makeCurrent();
+
+            // Creates a muxer but do not start or add tracks just yet.
+            muxer = createMuxer();
+
+            ByteBuffer[] videoEncoderOutputBuffers = videoEncoder.getOutputBuffers();
+            MediaCodec.BufferInfo videoEncoderOutputBufferInfo = new MediaCodec.BufferInfo();
+
+            int outputVideoTrack = -1;
+
+            boolean videoEncoderDone = false;
+            boolean isDrawEnding = false;
+
+            wholeTime = 0L;
+
+            int i = 0;
+            int frameCount = 0;
+            VideoExtractorAndDecoder[] list = new VideoExtractorAndDecoder[videoPaths.length];
+
+
+            while (!videoEncoderDone) {
+
+                if (i < videoPaths.length) {
+                    VideoExtractorAndDecoder vead = list[i];
+                    if (vead == null) {
+                        vead = new VideoExtractorAndDecoder(videoPaths[i], inputSurface);
+                        list[i] = vead;
+                    }
+
+                    if (vead.action()) {
+                        i++;
+                    }
+                } else if (!isDrawEnding) {
+                    VideoExtractorAndDecoder vead = list[i - 1];
+                    //vead.getOutputSurface().saveFrame();
+                    vead.getOutputSurface().drawEnding(frameCount);
+                    inputSurface.setPresentationTime(wholeTime + computePresentationTimeNsec(frameCount));
+                    inputSurface.swapBuffers();
+                    frameCount++;
+                    if (frameCount > 60) {
+                        isDrawEnding = true;
+                        videoEncoder.signalEndOfInputStream();
+                        list[i - 1].release();
+                        list[i - 1] = null;
+                    }
+                }
+
+                int j = i - 1;
+                if (j > -1 && j < videoPaths.length - 1 && list[j] != null) {
+                    list[j].release();
+                    list[j] = null;
+                }
+
+                // Poll frames from the video encoder and send them to the muxer.
+                while (mCopyVideo && !videoEncoderDone) {
+                    int encoderOutputBufferIndex = videoEncoder.dequeueOutputBuffer(videoEncoderOutputBufferInfo, TIMEOUT_USEC);
+                    if (encoderOutputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                        break;
+                    }
+                    if (encoderOutputBufferIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                        videoEncoderOutputBuffers = videoEncoder.getOutputBuffers();
+                        break;
+                    }
+                    if (encoderOutputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                        MediaFormat encoderOutputVideoFormat = videoEncoder.getOutputFormat();
+                        outputVideoTrack = muxer.addTrack(encoderOutputVideoFormat);
+                        muxer.start();
+                        break;
+                    }
+                    ByteBuffer encoderOutputBuffer = videoEncoderOutputBuffers[encoderOutputBufferIndex];
+                    if ((videoEncoderOutputBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                        if (VERBOSE) Log.d(TAG, "video encoder: codec config buffer");
+                        // Simply ignore codec config buffers.
+                        videoEncoder.releaseOutputBuffer(encoderOutputBufferIndex, false);
+                        break;
+                    }
+                    if (videoEncoderOutputBufferInfo.size != 0) {
+                        muxer.writeSampleData(outputVideoTrack, encoderOutputBuffer, videoEncoderOutputBufferInfo);
+                    }
+                    if ((videoEncoderOutputBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                            != 0) {
+                        if (VERBOSE) Log.d(TAG, "video encoder: EOS");
+                        videoEncoderDone = true;
+                    }
+                    videoEncoder.releaseOutputBuffer(encoderOutputBufferIndex, false);
+                    // We enqueued an encoded frame, let's try something else next.
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            try {
+                if (videoEncoder != null) {
+                    videoEncoder.stop();
+                    videoEncoder.release();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            try {
+                if (muxer != null) {
+                    muxer.stop();
+                    muxer.release();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            try {
+                if (inputSurface != null) {
+                    inputSurface.release();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     /**
      * Tests encoding and subsequently decoding video from frames generated into a buffer.
@@ -121,7 +412,7 @@ public class VideaEdit {
 
         MediaCodecInfo videoCodecInfo = selectCodec(OUTPUT_VIDEO_MIME_TYPE);
         if (videoCodecInfo == null) {
-            return;
+            throw new Exception("设备不支持");
         }
 
         MediaExtractor videoExtractor1 = null;
@@ -134,7 +425,6 @@ public class VideaEdit {
 
         MediaCodec videoEncoder = null;
         MediaMuxer muxer = null;
-
         InputSurface inputSurface = null;
 
         try {
@@ -190,11 +480,9 @@ public class VideaEdit {
                 videoEncoderOutputBufferInfo = new MediaCodec.BufferInfo();
             }
 
-            // We will get these from the encoders when notified of a format change.
-            MediaFormat encoderOutputVideoFormat;
-            // We will determine these once we have the output format.
-            int outputVideoTrack = -1;
             // Whether things are done on the video side.
+            int outputVideoTrack = -1;
+
             boolean videoExtractorDone2 = false;
             boolean videoExtractorDone1 = false;
             boolean videoDecoderDone1 = false;
@@ -384,7 +672,7 @@ public class VideaEdit {
                         break;
                     }
                     if (encoderOutputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                        encoderOutputVideoFormat = videoEncoder.getOutputFormat();
+                        MediaFormat encoderOutputVideoFormat = videoEncoder.getOutputFormat();
                         outputVideoTrack = muxer.addTrack(encoderOutputVideoFormat);
                         muxer.start();
                         break;
@@ -410,6 +698,8 @@ public class VideaEdit {
                     break;
                 }
             }
+        } catch (Exception e) {
+
         } finally {
             // Try to release everything we acquired, even if one of the releases fails, in which
             // case we save the first exception we got and re-throw at the end (unless something
@@ -426,16 +716,6 @@ public class VideaEdit {
                     exception = e;
                 }
             }
-            /*try {
-                if (audioExtractor != null) {
-                    audioExtractor.release();
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "error while releasing audioExtractor", e);
-                if (exception == null) {
-                    exception = e;
-                }
-            }*/
             try {
                 if (videoDecoder1 != null) {
                     videoDecoder1.stop();
@@ -511,13 +791,19 @@ public class VideaEdit {
         return extractor;
     }
 
+    private static MediaExtractor createExtractor(String path) throws IOException {
+        MediaExtractor extractor = new MediaExtractor();
+        extractor.setDataSource(path);
+        return extractor;
+    }
+
     /**
      * Creates a decoder for the given format, which outputs to the given surface.
      *
      * @param inputFormat the format of the stream to decode
      * @param surface     into which to decode the frames
      */
-    private MediaCodec createVideoDecoder(MediaFormat inputFormat, Surface surface) throws Exception {
+    private static MediaCodec createVideoDecoder(MediaFormat inputFormat, Surface surface) throws Exception {
         MediaCodec decoder = MediaCodec.createDecoderByType(getMimeTypeFor(inputFormat));
         decoder.configure(inputFormat, surface, null, 0);
         decoder.start();
@@ -534,7 +820,7 @@ public class VideaEdit {
      * @param format           of the stream to be produced
      * @param surfaceReference to store the surface to use as input
      */
-    private MediaCodec createVideoEncoder(
+    private static MediaCodec createVideoEncoder(
             MediaCodecInfo codecInfo,
             MediaFormat format,
             AtomicReference<Surface> surfaceReference) throws Exception {
@@ -555,7 +841,7 @@ public class VideaEdit {
         return new MediaMuxer(mOutputFile, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
-    private int getAndSelectVideoTrackIndex(MediaExtractor extractor) {
+    private static int getAndSelectVideoTrackIndex(MediaExtractor extractor) {
         for (int index = 0; index < extractor.getTrackCount(); ++index) {
             if (VERBOSE) {
                 Log.d(TAG, "format for track " + index + " is "
@@ -569,7 +855,7 @@ public class VideaEdit {
         return -1;
     }
 
-    private int getAndSelectAudioTrackIndex(MediaExtractor extractor) {
+    private static int getAndSelectAudioTrackIndex(MediaExtractor extractor) {
         for (int index = 0; index < extractor.getTrackCount(); ++index) {
             if (VERBOSE) {
                 Log.d(TAG, "format for track " + index + " is "

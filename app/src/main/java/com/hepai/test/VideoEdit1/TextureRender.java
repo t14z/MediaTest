@@ -3,10 +3,12 @@ package com.hepai.test.VideoEdit1;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
+import android.media.MediaMetadataRetriever;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.hepai.test.AppContext;
@@ -97,7 +99,6 @@ class TextureRender {
         GLES20.glUniformMatrix4fv(muSTMatrixHandle, 1, false, mSTMatrix, 0);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
         checkGlError("glDrawArrays");
-
 
 
         GLES20.glUseProgram(mProgramHandle);
@@ -445,4 +446,179 @@ class TextureRender {
             throw new RuntimeException(op + ": glError " + error);
         }
     }
+
+    public void drawEnding(int frameCount) {
+
+
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glUseProgram(mProgramHandle);
+        mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgramHandle, "u_MVPMatrix");
+        mTextureUniformHandle = GLES20.glGetUniformLocation(mProgramHandle, "u_Texture");
+        mPositionHandle = GLES20.glGetAttribLocation(mProgramHandle, "a_Position");
+        mColorHandle = GLES20.glGetAttribLocation(mProgramHandle, "a_Color");
+        mTextureCoordinateHandle = GLES20.glGetAttribLocation(mProgramHandle, "a_TexCoordinate");
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+
+        Matrix.setIdentityM(mModelMatrix, 0);
+
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE);
+
+      
+        drawLogo();
+        drawQR();
+
+        GLES20.glFinish();
+    }
+
+
+    private void drawLogo() {
+        Matrix.translateM(mModelMatrix, 0, 0, 0.0f, -0.5f);
+
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, finalFrameInfo.logoTextureDataHandle);
+        GLES20.glUniform1i(mTextureUniformHandle, 0);
+
+        finalFrameInfo.logoCubePositions.position(0);
+        GLES20.glVertexAttribPointer(mPositionHandle, POSITION_DATA_SIZE, GLES20.GL_FLOAT, false, 0, finalFrameInfo.logoCubePositions);
+        GLES20.glEnableVertexAttribArray(mPositionHandle);
+        mCubeColors.position(0);
+        GLES20.glVertexAttribPointer(mColorHandle, COLOR_DATA_SIZE, GLES20.GL_FLOAT, false, 0, mCubeColors);
+        GLES20.glEnableVertexAttribArray(mColorHandle);
+        mCubeTextureCoordinates.position(0);
+        GLES20.glVertexAttribPointer(mTextureCoordinateHandle, TEXTURE_COORDINATE_DATA_SIZE, GLES20.GL_FLOAT, false, 0, mCubeTextureCoordinates);
+        GLES20.glEnableVertexAttribArray(mTextureCoordinateHandle);
+        Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
+        //Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
+        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
+    }
+
+    private void drawQR() {
+        Matrix.translateM(mModelMatrix, 0, 0, 0.0f, -0.5f);
+
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, finalFrameInfo.qrTextureDataHandle);
+        GLES20.glUniform1i(mTextureUniformHandle, 0);
+
+        finalFrameInfo.qrCubePositions.position(0);
+        GLES20.glVertexAttribPointer(mPositionHandle, POSITION_DATA_SIZE, GLES20.GL_FLOAT, false, 0, finalFrameInfo.qrCubePositions);
+        GLES20.glEnableVertexAttribArray(mPositionHandle);
+        mCubeColors.position(0);
+        GLES20.glVertexAttribPointer(mColorHandle, COLOR_DATA_SIZE, GLES20.GL_FLOAT, false, 0, mCubeColors);
+        GLES20.glEnableVertexAttribArray(mColorHandle);
+        mCubeTextureCoordinates.position(0);
+        GLES20.glVertexAttribPointer(mTextureCoordinateHandle, TEXTURE_COORDINATE_DATA_SIZE, GLES20.GL_FLOAT, false, 0, mCubeTextureCoordinates);
+        GLES20.glEnableVertexAttribArray(mTextureCoordinateHandle);
+        Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
+        //Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
+        GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
+    }
+
+
+
+    /**
+     * 获取视频文件的第一张图片
+     *
+     * @param filePath
+     * @return
+     */
+    public static Bitmap getVideoThumbnail(String filePath) {
+        if (TextUtils.isEmpty(filePath)) return null;
+        Bitmap bitmap = null;
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(filePath);
+            bitmap = retriever.getFrameAtTime();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                retriever.release();
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+            }
+        }
+        return bitmap;
+    }
+
+    Bitmap finalFrame;
+
+    public void setFinalFrameInfo(Bitmap bmp) {
+        finalFrame = bmp;
+    }
+
+    FinalImageInfo finalFrameInfo = new FinalImageInfo();
+
+
+    public class FinalImageInfo {
+        public FloatBuffer bgCubePositions;
+        public Bitmap bgBitmap;
+        public int bgTextureDataHandle;
+
+        public FloatBuffer logoCubePositions;
+        public Bitmap logoBitmap;
+        public int logoTextureDataHandle;
+
+        public FloatBuffer qrCubePositions;
+        public Bitmap qrBitmap;
+        public int qrTextureDataHandle;
+
+        {
+            float cubePosition1[] =
+                    {
+                            -1.0f, 1.0f, 1.0f,//A
+                            -1.0f, -1.0f, 1.0f,//B
+                            1.0f, 1.0f, 1.0f,//C
+                            -1.0f, -1.0f, 1.0f,//D
+                            1.0f, -1.0f, 1.0f,//E
+                            1.0f, 1.0f, 1.0f,//F
+                    };
+            bgCubePositions = ByteBuffer.allocateDirect(cubePosition1.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            bgCubePositions.put(cubePosition1).position(0);
+
+            float cubePosition2[] =
+                    {
+                            -0.48f, -0.5375f, 1.0f,//A
+                            -0.48f, -0.85f, 1.0f,//B
+                            0.48f, -0.5375f, 1.0f,//C
+                            -0.48f, -0.85f, 1.0f,//D
+                            0.48f, -0.85f, 1.0f,//E
+                            0.48f, -0.5375f, 1.0f,//F
+                    };
+            logoCubePositions = ByteBuffer.allocateDirect(cubePosition2.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            logoCubePositions.put(cubePosition2).position(0);
+
+            float cubePosition3[] =
+                    {
+                            -0.5f, 0.75f, 0.5f,//A
+                            -0.5f, -0.25f, 0.5f,//B
+                            0.5f, 0.75f, 0.5f,//C
+                            -0.5f, -0.25f, 0.5f,//D
+                            0.5f, -0.25f, 0.5f,//E
+                            0.5f, 0.75f, 0.5f,//F
+                    };
+            qrCubePositions = ByteBuffer.allocateDirect(cubePosition3.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            qrCubePositions.put(cubePosition3).position(0);
+        }
+
+
+        public void release() {
+            if (bgBitmap != null) {
+                bgBitmap.recycle();
+                bgBitmap = null;
+            }
+            if (logoBitmap != null) {
+                logoBitmap.recycle();
+                logoBitmap = null;
+            }
+            if (qrBitmap != null) {
+                qrBitmap.recycle();
+                qrBitmap = null;
+            }
+        }
+    }
+
 }

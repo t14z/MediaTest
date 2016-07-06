@@ -1,35 +1,28 @@
 package com.hepai.test.VideoEdit1;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
-import android.opengl.EGL14;
+import android.opengl.GLES20;
 import android.util.Log;
 import android.view.Surface;
 
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 import javax.microedition.khronos.egl.EGL10;
-import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 
-/**
- * Holds state associated with a Surface used for MediaCodec decoder output.
- * <p>
- * The (width,height) constructor for this class will prepare GL, create a SurfaceTexture,
- * and then create a Surface for that SurfaceTexture.  The Surface can be passed to
- * MediaCodec.configure() to receive decoder output.  When a frame arrives, we latch the
- * texture with updateTexImage, then render the texture with GL to a pbuffer.
- * <p>
- * The no-arg constructor skips the GL preparation step and doesn't allocate a pbuffer.
- * Instead, it just creates the Surface and SurfaceTexture, and when a frame arrives
- * we just draw it on whatever surface is current.
- * <p>
- * By default, the Surface will be using a BufferQueue in asynchronous mode, so we
- * can potentially drop frames.
- */
 class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     private static final String TAG = "OutputSurface";
     private static final boolean VERBOSE = false;
-    private static final int EGL_OPENGL_ES2_BIT = 4;
     private EGL10 mEGL;
     private EGLDisplay mEGLDisplay;
     private EGLContext mEGLContext;
@@ -40,40 +33,16 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     private boolean mFrameAvailable;
     private TextureRender mTextureRender;
 
-    /**
-     * Creates an OutputSurface using the current EGL context.  Creates a Surface that can be
-     * passed to MediaCodec.configure().
-     */
     public OutputSurface() {
-        setup();
-    }
-    /**
-     * Creates instances of TextureRender and SurfaceTexture, and a Surface associated
-     * with the SurfaceTexture.
-     */
-    private void setup() {
         mTextureRender = new TextureRender();
         mTextureRender.surfaceCreated();
-        // Even if we don't access the SurfaceTexture after the constructor returns, we
-        // still need to keep a reference to it.  The Surface doesn't retain a reference
-        // at the Java level, so if we don't either then the object can get GCed, which
-        // causes the native finalizer to run.
-        if (VERBOSE) Log.d(TAG, "textureID=" + mTextureRender.getTextureId());
+        if (VERBOSE) Log.d(TAG, "textureID = " + mTextureRender.getTextureId());
         mSurfaceTexture = new SurfaceTexture(mTextureRender.getTextureId());
-        // This doesn't work if OutputSurface is created on the thread that CTS started for
-        // these test cases.
-        //
-        // The CTS-created thread has a Looper, and the SurfaceTexture constructor will
-        // create a Handler that uses it.  The "frame available" message is delivered
-        // there, but since we're not a Looper-based thread we'll never see it.  For
-        // this to do anything useful, OutputSurface must be created on a thread without
-        // a Looper, so that SurfaceTexture uses the main application Looper instead.
-        //
-        // Java language note: passing "this" out of a constructor is generally unwise,
-        // but we should be able to get away with it here.
+        //mSurfaceTexture.get
         mSurfaceTexture.setOnFrameAvailableListener(this);
         mSurface = new Surface(mSurfaceTexture);
     }
+
 
     /**
      * Discard all resources held by this class, notably the EGL context.
@@ -81,18 +50,12 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     public void release() {
         if (mEGL != null) {
             if (mEGL.eglGetCurrentContext().equals(mEGLContext)) {
-                // Clear the current context and surface to ensure they are discarded immediately.
                 mEGL.eglMakeCurrent(mEGLDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
             }
             mEGL.eglDestroySurface(mEGLDisplay, mEGLSurface);
             mEGL.eglDestroyContext(mEGLDisplay, mEGLContext);
-            //mEGL.eglTerminate(mEGLDisplay);
         }
         mSurface.release();
-        // this causes a bunch of warnings that appear harmless but might confuse someone:
-        // W BufferQueue: [unnamed-3997-2] cancelBuffer: BufferQueue has been abandoned!
-        // mSurfaceTexture.release();
-        // null everything out so future attempts to use this object will cause an NPE
         mEGLDisplay = null;
         mEGLContext = null;
         mEGLSurface = null;
@@ -101,6 +64,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         mSurface = null;
         mSurfaceTexture = null;
     }
+
     /**
      * Makes our EGL context and surface current.
      */
@@ -113,18 +77,14 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
             throw new RuntimeException("eglMakeCurrent failed");
         }
     }
+
     /**
      * Returns the Surface that we draw onto.
      */
     public Surface getSurface() {
         return mSurface;
     }
-    /**
-     * Replaces the fragment shader.
-     */
-    public void changeFragmentShader(String fragmentShader) {
-        mTextureRender.changeFragmentShader(fragmentShader);
-    }
+
     /**
      * Latches the next buffer into the texture.  Must be called from the thread that created
      * the OutputSurface object, after the onFrameAvailable callback has signaled that new
@@ -153,12 +113,18 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         mTextureRender.checkGlError("before updateTexImage");
         mSurfaceTexture.updateTexImage();
     }
+
     /**
      * Draws the data from SurfaceTexture onto the current EGL surface.
      */
     public void drawImage() {
         mTextureRender.drawFrame(mSurfaceTexture);
     }
+
+    public void drawEnding(int frameCount) {
+        mTextureRender.drawEnding(frameCount);
+    }
+
     @Override
     public void onFrameAvailable(SurfaceTexture st) {
         if (VERBOSE) Log.d(TAG, "new frame available");
@@ -170,6 +136,72 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
             mFrameSyncObject.notifyAll();
         }
     }
+
+    boolean hasLastFrame = false;
+
+    /**
+     * Saves the current frame to disk as a PNG image.
+     */
+    public void saveFrame() throws IOException {
+
+        if (hasLastFrame) {
+            return;
+        }
+        hasLastFrame = true;
+        int mWidth = 640;
+        int mHeight = 640;
+        ByteBuffer mPixelBuf = ByteBuffer.allocateDirect(mWidth * mHeight * 4);
+        mPixelBuf.order(ByteOrder.LITTLE_ENDIAN);
+
+        mPixelBuf.rewind();
+        GLES20.glReadPixels(0, 0, mWidth, mHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,
+                mPixelBuf);
+
+        BufferedOutputStream bos = null;
+        try {
+            /*Log.e("FUCK", "FUCK1");
+            Bitmap bmp = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.ARGB_8888);
+            mPixelBuf.rewind();
+            Log.e("FUCK", "FUCK2");
+            AppContext.activity.setImage(bmp);*/
+            String filename = "/sdcard/zzzzzzzz.png";
+            bos = new BufferedOutputStream(new FileOutputStream(filename));
+            Bitmap bmp = Bitmap.createBitmap(mWidth, mHeight, Bitmap.Config.ARGB_8888);
+
+            mPixelBuf.rewind();
+            bmp.copyPixelsFromBuffer(mPixelBuf);
+            bmp = convert(bmp);
+
+            mTextureRender.setFinalFrameInfo(bmp);
+            bmp.compress(Bitmap.CompressFormat.PNG, 90, bos);
+            bmp.recycle();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (bos != null) bos.close();
+        }
+    }
+
+
+    public Bitmap convert(Bitmap a) {
+
+        int w = a.getWidth();
+        int h = a.getHeight();
+
+        Bitmap newb = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);// 创建一个新的和SRC长度宽度一样的位图
+        Canvas cv = new Canvas(newb);
+        Matrix m = new Matrix();
+        m.postScale(1, -1);   //镜像垂直翻转
+
+        //m.postScale(-1, 1); //镜像水平翻转
+        //m.postRotate(-90);  //旋转-90度
+
+        Bitmap new2 = Bitmap.createBitmap(a, 0, 0, w, h, m, true);
+        cv.drawBitmap(new2, new Rect(0, 0, new2.getWidth(), new2.getHeight()), new Rect(0, 0, w, h), null);
+
+        return newb;
+    }
+
     /**
      * Checks for EGL errors.
      */

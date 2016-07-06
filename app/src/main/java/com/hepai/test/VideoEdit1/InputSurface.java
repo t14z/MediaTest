@@ -137,7 +137,7 @@ class InputSurface {
      * Sends the presentation time stamp to EGL.  Time is expressed in nanoseconds.
      */
     public void setPresentationTime(long nsecs) {
-        if (VERBOSE) Log.i(TAG, "nsecs = " + nsecs);
+        //if (VERBOSE) Log.i(TAG, "nsecs = " + nsecs);
         EGLExt.eglPresentationTimeANDROID(mEGLDisplay, mEGLSurface, nsecs);
     }
 
