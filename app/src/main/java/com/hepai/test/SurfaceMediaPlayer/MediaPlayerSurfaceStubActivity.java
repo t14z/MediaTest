@@ -16,10 +16,11 @@
 package com.hepai.test.SurfaceMediaPlayer;
 
 import android.app.Activity;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.Resources;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 import com.hepai.test.R;
 
@@ -27,7 +28,7 @@ public class MediaPlayerSurfaceStubActivity extends Activity {
 
     private static final String TAG = "MediaPlayerSurfaceStubActivity";
 
-    protected Resources mResources;
+    private ViewGroup viewGroup;
 
     private VideoSurfaceView mVideoView = null;
     private MediaPlayer mMediaPlayer = null;
@@ -35,20 +36,34 @@ public class MediaPlayerSurfaceStubActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        mResources = getResources();
+        setContentView(R.layout.activity_media_player_surface);
+        viewGroup = (ViewGroup) findViewById(R.id.mainView);
         mMediaPlayer = new MediaPlayer();
-
         try {
-            AssetFileDescriptor afd = mResources.openRawResourceFd(R.raw.aa);
-            mMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-            afd.close();
+            mMediaPlayer.setDataSource("/sdcard/source.mp4");
+            mVideoView = new VideoSurfaceView(this, mMediaPlayer);
+            viewGroup.addView(mVideoView, 600, 600);
         } catch (Exception e) {
-           e.printStackTrace();
+            e.printStackTrace();
         }
-
-        mVideoView = new VideoSurfaceView(this, mMediaPlayer);
-        setContentView(mVideoView);
+        findViewById(R.id.action).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mMediaPlayer.start();
+            }
+        });
+        findViewById(R.id.seekTo).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mMediaPlayer.seekTo(100000);
+            }
+        });
+        findViewById(R.id.stop).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mMediaPlayer.pause();
+            }
+        });
     }
 
     @Override

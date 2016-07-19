@@ -48,11 +48,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".VideoImport.VideoImportActivity" />
-        <activity
-            android:name=".SurfaceMediaPlayer.VideoPlayerActivity"
-            android:label="@string/title_activity_video_player"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity android:name=".VideoImport.VideoImportActivity"></activity>
+        <activity android:name=".SurfaceMediaPlayer.VideoPlayerActivity"></activity>
+        <activity android:name=".VideoImport1.Main5Activity"></activity>
     </application>
 
 </manifest>

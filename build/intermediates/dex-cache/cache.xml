@@ -1,2 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<items version="2" />
+<items version="2" >
+
+    <item
+        jar="/Users/jarvisyin/Android/sdk/extras/android/m2repository/com/android/support/support-annotations/23.4.0/support-annotations-23.4.0.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="ffbe55fdb2bb456b1485831706a9eac3300bb6b8">
+        <dex dex="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/pre-dexed/debug/support-annotations-23.4.0_54b2c27de4d65f23859a6710eb31dd542753fa0e.jar" />
+    </item>
+    <item
+        jar="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/exploded-aar/com.android.support/support-vector-drawable/23.4.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="c2c594cace5d83a3227b2b6e658ecbfd586d3ed9">
+        <dex dex="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/pre-dexed/debug/com.android.support-support-vector-drawable-23.4.0_f559104594dc7ddb0aa8888de6748907a98f27c5.jar" />
+    </item>
+    <item
+        jar="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/exploded-aar/jp.co.cyberagent.android.gpuimage/gpuimage-library/1.4.1/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="eb9f1cef6b29492df701111c555908cb53dece35">
+        <dex dex="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/pre-dexed/debug/jp.co.cyberagent.android.gpuimage-gpuimage-library-1.4.1_8990e645e14b0fd55bd8bd40afb336f167e704c9.jar" />
+    </item>
+    <item
+        jar="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-appindexing/8.1.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="4477ea44f5ec5ad064022a22691732d7638ff197">
+        <dex dex="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/pre-dexed/debug/com.google.android.gms-play-services-appindexing-8.1.0_bee8295b0d92bfca41a6c652c507611a6519b572.jar" />
+    </item>
+    <item
+        jar="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/exploded-aar/com.android.support/support-v4/23.4.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="67bd36ee9340ec7c254108936ad16b24bed160cc">
+        <dex dex="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/pre-dexed/debug/com.android.support-support-v4-23.4.0_2ddbe50714e3423a680bb416f92148f630fb0420.jar" />
+    </item>
+    <item
+        jar="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-basement/8.1.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="d0dda274b703dd9c5bb056867649d22b4171ae7d">
+        <dex dex="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/pre-dexed/debug/com.google.android.gms-play-services-basement-8.1.0_f1d6145c175b7a06835cfb0afcef7ee2f1f2ffff.jar" />
+    </item>
+    <item
+        jar="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.4.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="548f06de403a9409f00554b3ee12a9fdea0e236c">
+        <dex dex="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/pre-dexed/debug/com.android.support-appcompat-v7-23.4.0_5a1469ce382c10234fdd64aef296d259f1b2117b.jar" />
+    </item>
+    <item
+        jar="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/exploded-aar/com.android.support/design/23.4.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="5326d9a850d491714fef8cbfaa9ea3416f0bf0d2">
+        <dex dex="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/pre-dexed/debug/com.android.support-design-23.4.0_46ee0b287207b21cd523c005ff945ede0d8eeac2.jar" />
+    </item>
+    <item
+        jar="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/exploded-aar/com.android.support/support-v4/23.4.0/jars/libs/internal_impl-23.4.0.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="ea3c07504d2c8f4b13aa17c45c1b68ed9c1c3674">
+        <dex dex="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/pre-dexed/debug/internal_impl-23.4.0_985312c6c15a25170f96f70cff65a7027f061249.jar" />
+    </item>
+    <item
+        jar="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/exploded-aar/com.android.support/recyclerview-v7/23.4.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="ec75036c3c52e451d0cde50a5aedaf5fd32354a0">
+        <dex dex="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/pre-dexed/debug/com.android.support-recyclerview-v7-23.4.0_965a57b3d41de5b183185caa1256c35594ab0616.jar" />
+    </item>
+    <item
+        jar="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/exploded-aar/com.android.support/animated-vector-drawable/23.4.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="de4db3785756bfb0915a9f59a9b3f2fea7407be4">
+        <dex dex="/Users/jarvisyin/work/hepai/MediaTest/app/build/intermediates/pre-dexed/debug/com.android.support-animated-vector-drawable-23.4.0_66f8b1275d5060aa97f364341ae9e6e51659561f.jar" />
+    </item>
+
+</items>

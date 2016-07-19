@@ -38,7 +38,6 @@ public class VideoImportActivity extends Activity {
                 }
             }
         }.start();
-
     }
 
     private Handler handler = new Handler() {
