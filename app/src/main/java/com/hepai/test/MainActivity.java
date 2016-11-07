@@ -3,9 +3,9 @@ package com.hepai.test;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.TextView;
 
+import com.hepai.test.OpenGLTest.IndexFragment;
 import com.hepai.test.audioTrimmer.CheapSoundFile;
 import com.hepai.test.audioTrimmer.Util;
 
@@ -22,8 +22,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
-/*
-        mGPUImage = new GPUImage(this);
+
+        /*mGPUImage = new GPUImage(this);
         mGPUImage.setGLSurfaceView((GLSurfaceView) findViewById(R.id.surfaceView));
         mGPUImage.setImage(imageUri); // this loads image on the current thread, should be run in a thread
         mGPUImage.setFilter(new GPUImageSepiaFilter());
@@ -39,15 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
         //new EncodeAndMuxTest(this).testEncodeVideoToMp4();
 
-
-        textView = (TextView) findViewById(R.id.textView);
-        try {
-            init();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
+        getSupportFragmentManager().beginTransaction().add(R.id.content, new IndexFragment()).commit();
     }
 
 

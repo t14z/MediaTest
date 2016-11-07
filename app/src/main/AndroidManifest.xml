@@ -23,11 +23,17 @@
         <activity android:name=".AudioRecordingSample.AudioRecordPlayActivity" />
         <activity android:name=".CameraActivity" />
         <activity android:name=".AudioActivity" />
-        <activity android:name=".openGL.LessonOneActivity" />
-        <activity android:name=".MainActivity" />
+        <activity android:name=".openGL.LessonOneActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".MainActivity"></activity>
         <activity android:name=".MuxerAudioVideoActivity" />
         <activity android:name=".Text2Pic.TestActivity" />
-        <activity android:name=".gaussBlur.GaussBlurActivity" />
+        <activity android:name=".GaussBlur.GaussBlurActivity" />
         <activity android:name=".FirstPicDV.PhotoAlbumActivity" />
         <activity android:name=".MediaCodec.MediaCodecTestActivity" />
         <activity android:name=".VideoEdit.VideaEditActivity" />
@@ -42,11 +48,7 @@
 
         <activity android:name=".GetVideoThumbnail.Main4Activity" />
         <activity android:name=".SurfaceMediaPlayer.MediaPlayerSurfaceStubActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity android:name=".VideoImport.VideoImportActivity"></activity>
         <activity android:name=".SurfaceMediaPlayer.VideoPlayerActivity"></activity>

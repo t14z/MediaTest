@@ -2,6 +2,7 @@ package com.hepai.test.GetVideoThumbnail;
 
 import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;

@@ -249,13 +249,17 @@ public class LessonOneRenderer0 implements GLSurfaceView.Renderer {
         fpsCounter = new FPSCounter();
 
     }
-float i = -0.5f;
+
     /*@Override*/
     public void onDrawFrame(GL10 gl) {  // TODO Auto-generated method stub
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-        //GLES20.glClearColor(1.0f,0f,0f,1f);
-        long time = SystemClock.uptimeMillis() % 10000L;
-        float angleInDegrees = (360.0f / 10000.0f) * ((int) time);
+        //GLES20.glClearColor(0.0f,0.0f,0.0f,0.0f);
+        GLES20.glEnable(GLES20.GL_BLEND);
+
+        //GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+        //GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ZERO);
+
         GLES20.glUseProgram(mProgramHandle);
 
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgramHandle, "u_MVPMatrix");
@@ -267,31 +271,24 @@ float i = -0.5f;
 
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 0, 0.0f, -0.7f);
-        i=i-0.01f;
-        //Matrix.translateM(mModelMatrix, 0, i, 0.0f, -0.5f);
-        //Matrix.rotateM(mModelMatrix, 0, angleInDegrees, 1.0f, 1.0f, 0.0f);
-        //for (int i = 0; i < mCubePositions.length; i++) {
-        int j = 0;
 
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureDataHandle[j]);
-            GLES20.glUniform1i(mTextureUniformHandle, 0);
-            drawCube(mCubePositions[j], mCubeColors[j], mCubeTextureCoordinates[j]);
+        int j;
+
+        j = 0;
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureDataHandle[j]);
+        GLES20.glUniform1i(mTextureUniformHandle, 0);
+        drawCube(mCubePositions[j], mCubeColors[j], mCubeTextureCoordinates[j]);
 
         j = 1;
-        /*GLES20.glEnable(GLES20.GL_BLEND);
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-        */
-
-        // Matrix.scaleM(mModelMatrix,0,0,0,i);
-      //Matrix.translateM(mModelMatrix, 0, /*i*/0.3f, 0.0f, i);
-        //Matrix.translateM(mModelMatrix, 0, 0, 0.0f, -0.5f);
+        GLES20.glClearColor(1.0f,0.0f,0.0f,0.0f);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureDataHandle[j]);
         GLES20.glUniform1i(mTextureUniformHandle, 0);
         drawCube(mCubePositions[j], mCubeColors[0], mCubeTextureCoordinates[0]);
 
-        //}
-        //drawCube(mCubePositions[1], mCubeColors[1], mCubeTextureCoordinates[1]);
         fps = fpsCounter.getFPS();
+
+        GLES20.glDisable(GLES20.GL_BLEND);
+        GLES20.glFinish();
     }
 
     private void drawCube(final FloatBuffer cubePositionsBuffer, final FloatBuffer cubeColorsBuffer, final FloatBuffer cubeTextureCoordinatesBuffer) {
@@ -332,7 +329,7 @@ float i = -0.5f;
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         // TODO Auto-generated method stub
-        GLES20.glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         GLES20.glEnable(GLES20.GL_CULL_FACE);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         // Position the eye behind the origin.
@@ -359,11 +356,11 @@ float i = -0.5f;
         mProgramHandle = createAndLinkProgram(vertexShaderHandle, fragmentShaderHandle,
                 new String[]{"a_Position", "a_Color", "a_TexCoordinate"});
         mTextureDataHandle[0] = ToolsUtil.loadTexture(mContext, R.drawable.jj);
-        mTextureDataHandle[1] = ToolsUtil.loadTexture(mContext, R.drawable.aa);
+        mTextureDataHandle[1] = ToolsUtil.loadTexture(mContext, R.drawable.ff);
         mTextureDataHandle[2] = ToolsUtil.loadTexture(mContext, R.drawable.cc);
         mTextureDataHandle[3] = ToolsUtil.loadTexture(mContext, R.drawable.dd);
         mTextureDataHandle[4] = ToolsUtil.loadTexture(mContext, R.drawable.ee);
-        mTextureDataHandle[5] = ToolsUtil.loadTexture(mContext, R.drawable.ff);
+        mTextureDataHandle[5] = ToolsUtil.loadTexture(mContext, R.drawable.aa);
     }
 
     private String getVertexShader() {

@@ -1,4 +1,4 @@
-package com.hepai.test.gaussBlur;
+package com.hepai.test.GaussBlur;
 
 import android.content.Context;
 import android.graphics.Bitmap;

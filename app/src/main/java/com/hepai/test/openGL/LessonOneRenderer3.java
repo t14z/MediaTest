@@ -7,7 +7,6 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
-import android.os.SystemClock;
 import android.util.Log;
 
 import com.hepai.test.OpenGLES2.ShaderUtil;
@@ -244,7 +243,7 @@ public class LessonOneRenderer3 implements GLSurfaceView.Renderer {
                 + " gl_FragColor = texture2D(u_Texture, v_TexCoordinate); \n" // Pass the color directly through the pipeline.
                 + "} \n";
         // return fragmentShader;mContext
-        return ShaderUtil.loadFromAssetsFile("a.sh", mContext.getResources());
+        return ShaderUtil.loadFromAssetsFile("GaussianFra.sh", mContext.getResources());
     }
 
     private int compileShader(final int shaderType, final String shaderSource) {
